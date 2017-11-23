@@ -14,6 +14,7 @@ import com.dabin.www.yuekaob.presenter.Presenter;
 import com.dabin.www.yuekaob.view.IView;
 import com.jcodecraeer.xrecyclerview.XRecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
@@ -26,26 +27,20 @@ public class MainActivity extends AppCompatActivity implements IView {
     private int type;
     private int size;
     private int offset;
+    HomeAdapter homeAdapter=null;
+    List<NewBase.SongListBean> listBeanList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        listBeanList=new ArrayList<>();
         type = 1;
         size = 10;
         offset = 0;
         xrecycler.setLayoutManager(new LinearLayoutManager(this));
         new Presenter(this).setUrl(type + "", size + "", offset + "");
-    }
-    List<NewBase.SongListBean> listBeanList;
-
-    @Override
-    public void getData(final List<NewBase.SongListBean> song_list) {
-        listBeanList = song_list;
-
-        final HomeAdapter homeAdapter = new HomeAdapter(MainActivity.this, listBeanList);
-        xrecycler.setAdapter(homeAdapter);
         xrecycler.setLoadingListener(new XRecyclerView.LoadingListener() {
             @Override
             public void onRefresh() {
@@ -54,12 +49,12 @@ public class MainActivity extends AppCompatActivity implements IView {
                 size = 10;
                 offset = 0;
                 new Presenter(MainActivity.this).setUrl(type + "", size + "", offset + "");
+               // homeAdapter.notifyDataSetChanged();
                 xrecycler.refreshComplete();
             }
 
             @Override
             public void onLoadMore() {
-
                 offset += 10;
                 if (offset == 20) {
                     type += 1;
@@ -68,35 +63,52 @@ public class MainActivity extends AppCompatActivity implements IView {
                         type = 1;
                     }
                 }
-                listBeanList.addAll(song_list);
                 new Presenter(MainActivity.this).setUrl(type + "", size + "", offset + "");
-                homeAdapter.notifyDataSetChanged();
-                xrecycler.loadMoreComplete();
             }
         });
-
-        homeAdapter.setOnDanji(new HomeAdapter.OnDanji() {
-            @Override
-            public void Danji(View view, int position) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setTitle("电影")
-                        .setMessage("是否下载？")
-                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                startActivity(new Intent(MainActivity.this,ViewActivity.class));
-                            }
-                        })
-                        .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-
-                            }
-                        }).show();
+    }
 
 
-            }
-        });
+    @Override
+    public void getData(final List<NewBase.SongListBean> song_list) {
+        listBeanList.addAll(song_list);
+        if (homeAdapter == null) {
+            homeAdapter = new HomeAdapter(MainActivity.this, listBeanList);
+            xrecycler.setAdapter(homeAdapter);
+        } else {
+            new Presenter(MainActivity.this).setUrl(type + "", size + "", offset + "");
+            homeAdapter.notifyDataSetChanged();
+            xrecycler.loadMoreComplete();
+
+        }
+
+
+        homeAdapter.setOnDanji(new HomeAdapter.OnDanji()
+
+                               {
+                                   @Override
+                                   public void Danji(View view, int position) {
+                                       AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                                       builder.setTitle("电影")
+                                               .setMessage("是否下载？")
+                                               .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                                   @Override
+                                                   public void onClick(DialogInterface dialogInterface, int i) {
+                                                       startActivity(new Intent(MainActivity.this, ViewActivity.class));
+                                                   }
+                                               })
+                                               .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                                                   @Override
+                                                   public void onClick(DialogInterface dialogInterface, int i) {
+
+                                                   }
+                                               }).show();
+
+
+                                   }
+                               }
+
+        );
 
     }
 
